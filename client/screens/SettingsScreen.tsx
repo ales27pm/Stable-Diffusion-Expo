@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, Switch, Image, Alert, Linking, Platform } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  Switch,
+  Image,
+  Alert,
+  Platform,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -13,7 +21,11 @@ import { ThemedText } from "@/components/ThemedText";
 import { GradientButton } from "@/components/GradientButton";
 import { AppColors, BorderRadius, Spacing } from "@/constants/theme";
 import { getSettings, saveSettings, AppSettings } from "@/lib/storage";
-import { isLoaded, loadModel, unloadModel, isNativeModuleAvailable } from "@/lib/stableDiffusion";
+import {
+  loadModel,
+  unloadModel,
+  getStableDiffusionAvailability,
+} from "@/lib/stableDiffusion";
 
 interface SettingRowProps {
   icon: string;
@@ -23,7 +35,13 @@ interface SettingRowProps {
   rightElement?: React.ReactNode;
 }
 
-function SettingRow({ icon, title, subtitle, onPress, rightElement }: SettingRowProps) {
+function SettingRow({
+  icon,
+  title,
+  subtitle,
+  onPress,
+  rightElement,
+}: SettingRowProps) {
   return (
     <Pressable
       style={({ pressed }) => [
@@ -45,13 +63,23 @@ function SettingRow({ icon, title, subtitle, onPress, rightElement }: SettingRow
       {rightElement ? (
         rightElement
       ) : onPress ? (
-        <Feather name="chevron-right" size={20} color={AppColors.textTertiary} />
+        <Feather
+          name="chevron-right"
+          size={20}
+          color={AppColors.textTertiary}
+        />
       ) : null}
     </Pressable>
   );
 }
 
-function SettingSection({ title, children }: { title: string; children: React.ReactNode }) {
+function SettingSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <View style={styles.section}>
       <ThemedText style={styles.sectionTitle}>{title}</ThemedText>
@@ -93,19 +121,19 @@ export default function SettingsScreen() {
       try {
         await unloadModel();
         updateSettings({ isModelLoaded: false });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (error) {
+        console.error("Failed to unload model", error);
         Alert.alert("Error", "Failed to unload model");
       }
     } else {
       // Load model
-      if (!isNativeModuleAvailable()) {
-        Alert.alert(
-          "Native Build Required",
-          "Loading Stable Diffusion models requires a native iOS build. This feature is not available in Expo Go.\n\nBuild your app with EAS to use this feature.",
-          [{ text: "OK" }]
-        );
-        return;
+      const availability = getStableDiffusionAvailability();
+      if (!availability.isAvailable) {
+        Alert.alert(availability.title, availability.message, [{ text: "OK" }]);
+        if (!availability.canUseDemo) {
+          return;
+        }
       }
 
       setIsModelLoading(true);
@@ -117,6 +145,7 @@ export default function SettingsScreen() {
         updateSettings({ isModelLoaded: true, modelPath });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (error) {
+        console.error("Failed to load model", error);
         Alert.alert("Error", "Failed to load model");
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       } finally {
@@ -201,7 +230,7 @@ export default function SettingsScreen() {
             {settings.isModelLoaded ? "Unload Model" : "Load Model"}
           </GradientButton>
           <ThemedText style={styles.modelHint}>
-            Download models from Apple's Hugging Face repo
+            {"Download models from Apple’s Hugging Face repo"}
           </ThemedText>
         </View>
       </SettingSection>
@@ -210,7 +239,9 @@ export default function SettingsScreen() {
         <View style={styles.sliderRow}>
           <View style={styles.sliderHeader}>
             <ThemedText style={styles.sliderLabel}>Default Steps</ThemedText>
-            <ThemedText style={styles.sliderValue}>{settings.defaultSteps}</ThemedText>
+            <ThemedText style={styles.sliderValue}>
+              {settings.defaultSteps}
+            </ThemedText>
           </View>
           <Slider
             style={styles.slider}

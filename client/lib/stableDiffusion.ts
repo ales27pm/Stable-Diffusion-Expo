@@ -1,4 +1,5 @@
-import { Platform } from "react-native";
+import Constants from "expo-constants";
+import { NativeModules, Platform } from "react-native";
 
 // Type definitions for expo-stable-diffusion module
 // This module only works in native builds, not Expo Go
@@ -26,13 +27,15 @@ let stepListeners: StepListener[] = [];
 export async function loadModel(modelPath: string): Promise<void> {
   if (Platform.OS === "web") {
     console.log("[Web] Stable Diffusion not available on web");
-    throw new Error("Stable Diffusion is only available on iOS devices with native builds");
+    throw new Error(
+      "Stable Diffusion is only available on iOS devices with native builds",
+    );
   }
 
   // In native build, this would call ExpoStableDiffusion.loadModel(modelPath)
   // For development, we simulate the loading process
   console.log(`[StableDiffusion] Loading model from: ${modelPath}`);
-  
+
   return new Promise((resolve) => {
     setTimeout(() => {
       isModelLoaded = true;
@@ -57,7 +60,9 @@ export function getLoadedModelPath(): string | null {
   return currentModelPath;
 }
 
-export function addStepListener(listener: StepListener): { remove: () => void } {
+export function addStepListener(listener: StepListener): {
+  remove: () => void;
+} {
   stepListeners.push(listener);
   return {
     remove: () => {
@@ -70,7 +75,9 @@ function notifyStepListeners(step: number) {
   stepListeners.forEach((listener) => listener({ step }));
 }
 
-export async function generateImage(params: GenerateImageParams): Promise<string> {
+export async function generateImage(
+  params: GenerateImageParams,
+): Promise<string> {
   const { prompt, stepCount = 25, savePath, seed } = params;
 
   if (!isModelLoaded) {
@@ -78,11 +85,15 @@ export async function generateImage(params: GenerateImageParams): Promise<string
   }
 
   if (Platform.OS === "web") {
-    throw new Error("Image generation is only available on iOS devices with native builds");
+    throw new Error(
+      "Image generation is only available on iOS devices with native builds",
+    );
   }
 
   console.log(`[StableDiffusion] Generating image with prompt: "${prompt}"`);
-  console.log(`[StableDiffusion] Steps: ${stepCount}, Seed: ${seed || "random"}`);
+  console.log(
+    `[StableDiffusion] Steps: ${stepCount}, Seed: ${seed || "random"}`,
+  );
 
   // Simulate the generation process
   // In native build, this would call ExpoStableDiffusion.generateImage(params)
@@ -91,10 +102,10 @@ export async function generateImage(params: GenerateImageParams): Promise<string
     const stepInterval = setInterval(() => {
       currentStep++;
       notifyStepListeners(currentStep);
-      
+
       if (currentStep >= stepCount) {
         clearInterval(stepInterval);
-        
+
         // In production, this would return the actual saved image path
         // For development, we return a placeholder
         console.log(`[StableDiffusion] Image generated at: ${savePath}`);
@@ -105,10 +116,80 @@ export async function generateImage(params: GenerateImageParams): Promise<string
 }
 
 // Check if the native module is available
+export function isExpoGo(): boolean {
+  return (
+    Constants.appOwnership === "expo" ||
+    Constants.executionEnvironment === "storeClient"
+  );
+}
+
 export function isNativeModuleAvailable(): boolean {
-  // In a real native build, we would check if the module exists
-  // For now, we return false as we're in Expo Go
-  return Platform.OS === "ios" && !__DEV__;
+  if (Platform.OS !== "ios") {
+    return false;
+  }
+
+  return Boolean(
+    (NativeModules as { ExpoStableDiffusion?: unknown }).ExpoStableDiffusion,
+  );
+}
+
+export type StableDiffusionAvailability = {
+  isAvailable: boolean;
+  canUseDemo: boolean;
+  title: string;
+  message: string;
+};
+
+export function getStableDiffusionAvailability(): StableDiffusionAvailability {
+  if (Platform.OS === "web") {
+    return {
+      isAvailable: false,
+      canUseDemo: false,
+      title: "Unsupported Platform",
+      message: "Stable Diffusion is not available on the web.",
+    };
+  }
+
+  if (Platform.OS !== "ios") {
+    return {
+      isAvailable: false,
+      canUseDemo: false,
+      title: "Unsupported Platform",
+      message: "Stable Diffusion is only available on iOS devices.",
+    };
+  }
+
+  if (isExpoGo()) {
+    return {
+      isAvailable: false,
+      canUseDemo: true,
+      title: "Demo Mode",
+      message:
+        "Stable Diffusion runs only in native iOS builds. Using demo mode in Expo Go.",
+    };
+  }
+
+  if (!isNativeModuleAvailable()) {
+    if (__DEV__) {
+      console.warn(
+        "[StableDiffusion] Native module missing in development build.",
+      );
+    }
+    return {
+      isAvailable: false,
+      canUseDemo: false,
+      title: "Native Build Required",
+      message:
+        "Loading Stable Diffusion models requires a native iOS build. This feature is not available in Expo Go.\n\nBuild your app with EAS to use this feature.",
+    };
+  }
+
+  return {
+    isAvailable: true,
+    canUseDemo: false,
+    title: "Ready",
+    message: "Stable Diffusion is available.",
+  };
 }
 
 // Get device compatibility info
