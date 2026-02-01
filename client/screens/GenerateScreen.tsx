@@ -21,6 +21,13 @@ import {
 } from "@/lib/stableDiffusion";
 import { saveGeneratedImage, generateId, getSettings } from "@/lib/storage";
 
+/**
+ * Screen for composing a text prompt and producing an image either via the local Stable Diffusion native module or a simulated demo path.
+ *
+ * Renders a preview card, prompt input, advanced settings (steps and seed), and a Generate button. Initiating generation validates the prompt, updates step progress, saves generated image metadata, and emits success/error haptics; when a native model is unavailable (or running in Expo Go on non‑web), a simulated demo flow is used instead. Alerts are shown for an empty prompt or when a required model is not loaded.
+ *
+ * @returns A JSX element containing the image-generation UI: preview, prompt input, advanced settings, and generate action.
+ */
 export default function GenerateScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();

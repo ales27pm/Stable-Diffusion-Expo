@@ -24,6 +24,14 @@ let isModelLoaded = false;
 let currentModelPath: string | null = null;
 let stepListeners: StepListener[] = [];
 
+/**
+ * Loads a Stable Diffusion model from the given file path into the module's runtime.
+ *
+ * Marks the module as loaded and records the loaded model path for subsequent operations.
+ *
+ * @param modelPath - Filesystem path or bundle identifier of the model to load
+ * @throws Error if invoked on web platforms; Stable Diffusion is only available on native iOS builds
+ */
 export async function loadModel(modelPath: string): Promise<void> {
   if (Platform.OS === "web") {
     console.log("[Web] Stable Diffusion not available on web");
@@ -56,10 +64,21 @@ export function isLoaded(): boolean {
   return isModelLoaded;
 }
 
+/**
+ * Returns the file path of the currently loaded Stable Diffusion model.
+ *
+ * @returns The loaded model's path as a string, or `null` if no model is loaded.
+ */
 export function getLoadedModelPath(): string | null {
   return currentModelPath;
 }
 
+/**
+ * Registers a listener to receive step-progress events during image generation.
+ *
+ * @param listener - Function invoked with a `StepEvent` each generation step
+ * @returns An object with a `remove` method that unregisters the listener so it no longer receives step events
+ */
 export function addStepListener(listener: StepListener): {
   remove: () => void;
 } {
@@ -71,10 +90,27 @@ export function addStepListener(listener: StepListener): {
   };
 }
 
+/**
+ * Notify all registered step listeners with the current generation step.
+ *
+ * @param step - The current generation step number (1-based)
+ */
 function notifyStepListeners(step: number) {
   stepListeners.forEach((listener) => listener({ step }));
 }
 
+/**
+ * Generate an image from a text prompt using the currently loaded Stable Diffusion model.
+ *
+ * @param params - Generation parameters:
+ *   - prompt: Text prompt describing the desired image.
+ *   - stepCount: Number of diffusion steps to run (defaults to 25).
+ *   - savePath: Filesystem path where the generated image will be saved.
+ *   - seed: Optional random seed to reproduce results.
+ * @returns The filesystem path where the generated image was saved.
+ * @throws If no model is loaded.
+ * @throws If called on the web platform (image generation requires iOS native builds).
+ */
 export async function generateImage(
   params: GenerateImageParams,
 ): Promise<string> {
@@ -115,7 +151,11 @@ export async function generateImage(
   });
 }
 
-// Check if the native module is available
+/**
+ * Determines whether the native Stable Diffusion module is present and usable on the current device.
+ *
+ * @returns `true` if running on iOS and `NativeModules.ExpoStableDiffusion` is present, `false` otherwise.
+ */
 export function isNativeModuleAvailable(): boolean {
   if (Platform.OS !== "ios") {
     return false;
@@ -126,6 +166,11 @@ export function isNativeModuleAvailable(): boolean {
   );
 }
 
+/**
+ * Detects whether the app is running inside Expo Go or the Expo Store client.
+ *
+ * @returns `true` if running under Expo Go or the Expo Store client, `false` otherwise.
+ */
 export function isExpoGo(): boolean {
   return (
     Constants.appOwnership === "expo" ||
