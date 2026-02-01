@@ -1,0 +1,20 @@
+name: ai-art-studio
+expo:
+  displayName: "AI Art Studio"
+  slug: ai-art-studio
+  version: "1.0.0"
+  platforms:
+    - ios
+    - android
+  ios:
+    bundleIdentifier: com.aiartstudio.app
+  android:
+    package: com.aiartstudio.app
+eas:
+  buildProfiles:
+    - development
+    - preview
+    - production
+  requiredSecrets:
+    - EXPO_TOKEN
+    - EAS_PROJECT_ID

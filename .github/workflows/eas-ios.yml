@@ -1,0 +1,86 @@
+name: EAS iOS Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "EAS build profile to use"
+        required: true
+        default: "development"
+        type: choice
+        options:
+          - development
+          - preview
+          - production
+      auto_submit:
+        description: "Automatically submit the build"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+concurrency:
+  group: eas-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eas-ios-build:
+    name: Build iOS with EAS
+    runs-on: macos-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+      EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.8"
+
+      - name: Install Git LFS (ml-stable-diffusion)
+        run: brew install git-lfs
+
+      - name: Install Core ML Stable Diffusion tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r https://raw.githubusercontent.com/apple/ml-stable-diffusion/main/requirements.txt
+          pip install git+https://github.com/apple/ml-stable-diffusion.git
+
+      - name: Validate Core ML Stable Diffusion CLI
+        run: |
+          xcodebuild -version
+          python -m python_coreml_stable_diffusion.torch2coreml -h
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN || secrets.EAS_TOKEN }}
+
+      - name: Verify EAS auth
+        run: eas whoami
+
+      - name: Build iOS app
+        run: |
+          EAS_ARGS=("--platform" "ios" "--profile" "${{ inputs.profile }}" "--non-interactive" "--wait")
+          if [ -n "${EAS_PROJECT_ID}" ]; then
+            EAS_ARGS+=("--project-id" "${EAS_PROJECT_ID}")
+          fi
+          if [ "${{ inputs.auto_submit }}" = "true" ]; then
+            EAS_ARGS+=("--auto-submit")
+          fi
+          eas build "${EAS_ARGS[@]}"
