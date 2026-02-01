@@ -39,11 +39,12 @@ const INTRO = [
 ].join("\n");
 
 function resolveAgentsPath(targetPath) {
+  const normalized = targetPath
+    ? path.resolve(targetPath)
+    : path.join(process.cwd(), "AGENTS.md");
   if (!targetPath) {
-    return path.join(process.cwd(), "AGENTS.md");
+    return normalized;
   }
-
-  const normalized = path.resolve(targetPath);
   if (normalized.endsWith("AGENTS.md")) {
     return normalized;
   }
@@ -145,19 +146,42 @@ function removeAgentsFile(filePath) {
 
 function printUsage() {
   console.log(
-    `\nUsage: node scripts/agents-manager.js <command> [path] [options]\n\nCommands:\n  init <path>              Create AGENTS.md (fails if it exists)\n  update <path>            Create or update AGENTS.md, preserving section content\n  set <path>               Update a section with custom content\n  remove <path>            Remove AGENTS.md\n\nOptions for set:\n  --section "Section"       Section name (${DEFAULT_SECTIONS.join(", ")})\n  --content "Text"          Content to place inside the section\n\nExamples:\n  node scripts/agents-manager.js update .\n  node scripts/agents-manager.js set . --section "Roadmap" --content "- [x] Ship it"\n  node scripts/agents-manager.js remove ./docs\n`,
+    `\nUsage: node scripts/agents-manager.js <command> [path] [options]\n\nCommands:\n  init <path>              Create AGENTS.md (fails if it exists unless --force)\n  update <path>            Create or update AGENTS.md, preserving section content\n  set <path>               Update a section with custom content\n  remove <path>            Remove AGENTS.md\n\nOptions for init:\n  --force [true|false]      Overwrite AGENTS.md if it already exists (default: false)\n\nOptions for set:\n  --section "Section"       Section name (${DEFAULT_SECTIONS.join(", ")})\n  --content "Text"          Content to place inside the section\n\nExamples:\n  node scripts/agents-manager.js update .\n  node scripts/agents-manager.js set . --section "Roadmap" --content "- [x] Ship it"\n  node scripts/agents-manager.js remove ./docs\n`,
   );
+}
+
+function normalizeFlagValue(value) {
+  const normalized = String(value).toLowerCase();
+  if (["true", "1", "yes", "y", "on"].includes(normalized)) return true;
+  if (["false", "0", "no", "n", "off"].includes(normalized)) return false;
+  return value;
 }
 
 function parseArgs(argv) {
   const args = [...argv];
   const options = {};
+  const booleanFlags = new Set(["force"]);
   while (args.length) {
     const current = args.shift();
     if (!current) continue;
     if (current.startsWith("--")) {
       const key = current.slice(2);
-      options[key] = args.shift() || "";
+      const next = args[0];
+      if (!next || String(next).startsWith("--")) {
+        options[key] = true;
+        continue;
+      }
+      if (booleanFlags.has(key)) {
+        const normalized = normalizeFlagValue(next);
+        if (typeof normalized === "boolean") {
+          options[key] = normalized;
+          args.shift();
+        } else {
+          options[key] = true;
+        }
+        continue;
+      }
+      options[key] = normalizeFlagValue(args.shift());
       continue;
     }
     options._ = options._ || [];
@@ -180,12 +204,12 @@ function run() {
     return;
   }
 
-  const filePath = resolveAgentsPath(targetPath || process.cwd());
+  const filePath = resolveAgentsPath(targetPath);
 
   try {
     switch (command) {
       case "init": {
-        createAgentsFile(filePath, { force: options.force === "true" });
+        createAgentsFile(filePath, { force: options.force === true });
         break;
       }
       case "update": {
@@ -193,7 +217,7 @@ function run() {
         break;
       }
       case "set": {
-        if (!options.section || !options.content) {
+        if (!options.section || typeof options.content !== "string") {
           throw new Error("set requires --section and --content");
         }
         setSectionContent(filePath, options.section, options.content);
@@ -205,6 +229,7 @@ function run() {
       }
       default:
         printUsage();
+        process.exitCode = 1;
     }
   } catch (error) {
     console.error(error.message);
