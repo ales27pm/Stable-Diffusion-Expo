@@ -116,6 +116,13 @@ export async function generateImage(
 }
 
 // Check if the native module is available
+export function isExpoGo(): boolean {
+  return (
+    Constants.appOwnership === "expo" ||
+    Constants.executionEnvironment === "storeClient"
+  );
+}
+
 export function isNativeModuleAvailable(): boolean {
   if (Platform.OS !== "ios") {
     return false;
@@ -126,11 +133,63 @@ export function isNativeModuleAvailable(): boolean {
   );
 }
 
-export function isExpoGo(): boolean {
-  return (
-    Constants.appOwnership === "expo" ||
-    Constants.executionEnvironment === "storeClient"
-  );
+export type StableDiffusionAvailability = {
+  isAvailable: boolean;
+  canUseDemo: boolean;
+  title: string;
+  message: string;
+};
+
+export function getStableDiffusionAvailability(): StableDiffusionAvailability {
+  if (Platform.OS === "web") {
+    return {
+      isAvailable: false,
+      canUseDemo: false,
+      title: "Unsupported Platform",
+      message: "Stable Diffusion is not available on the web.",
+    };
+  }
+
+  if (Platform.OS !== "ios") {
+    return {
+      isAvailable: false,
+      canUseDemo: false,
+      title: "Unsupported Platform",
+      message: "Stable Diffusion is only available on iOS devices.",
+    };
+  }
+
+  if (isExpoGo()) {
+    return {
+      isAvailable: false,
+      canUseDemo: true,
+      title: "Demo Mode",
+      message:
+        "Stable Diffusion runs only in native iOS builds. Using demo mode in Expo Go.",
+    };
+  }
+
+  if (!isNativeModuleAvailable()) {
+    if (__DEV__) {
+      console.warn(
+        "[StableDiffusion] Native module missing in development build.",
+      );
+    }
+    return {
+      isAvailable: false,
+      canUseDemo: false,
+      title: "Native Build Required",
+      message:
+        "Loading Stable Diffusion models requires a native iOS build. This feature is not available in Expo Go.\n\nBuild your app with EAS to use this feature.",
+    };
+  }
+
+  return {
+    isAvailable: true,
+    canUseDemo: false,
+    title: "Ready",
+    message: "Stable Diffusion is available.",
+  };
 }
 
 // Get device compatibility info
