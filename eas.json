@@ -1,0 +1,46 @@
+{
+  "cli": {
+    "version": ">= 13.2.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "hooks": {
+        "preBuild": "bash ./eas-hooks/install-coreml.sh"
+      },
+      "ios": {
+        "resourceClass": "m-medium"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "hooks": {
+        "preBuild": "bash ./eas-hooks/install-coreml.sh"
+      },
+      "ios": {
+        "resourceClass": "m-medium"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "autoSubmit": true,
+      "hooks": {
+        "preBuild": "bash ./eas-hooks/install-coreml.sh"
+      },
+      "ios": {
+        "resourceClass": "m-medium"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "$ASC_APP_ID",
+        "ascApiKeyId": "$ASC_API_KEY_ID",
+        "ascApiKeyIssuerId": "$ASC_API_KEY_ISSUER_ID",
+        "ascApiKeyPath": "$ASC_API_KEY_PATH"
+      }
+    }
+  }
+}
