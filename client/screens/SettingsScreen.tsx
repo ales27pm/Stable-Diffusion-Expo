@@ -121,7 +121,7 @@ export default function SettingsScreen() {
       try {
         await unloadModel();
         updateSettings({ isModelLoaded: false });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (error) {
         console.error("Failed to unload model", error);
         Alert.alert("Error", "Failed to unload model");
