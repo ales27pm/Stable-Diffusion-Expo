@@ -1,16 +1,16 @@
 /* eslint-env node */
-const fs = require("fs");
-const path = require("path");
-
 module.exports = ({ config }) => {
   const plugins = [...(config.plugins ?? [])];
-  const buildPropertiesPath = path.join(
-    process.cwd(),
-    "node_modules",
-    "expo-build-properties",
-  );
+  let hasExpoBuildProperties = false;
 
-  if (fs.existsSync(buildPropertiesPath)) {
+  try {
+    require.resolve("expo-build-properties/package.json");
+    hasExpoBuildProperties = true;
+  } catch {
+    // expo-build-properties is not installed; skip adding the plugin
+  }
+
+  if (hasExpoBuildProperties) {
     plugins.push([
       "expo-build-properties",
       {
@@ -19,10 +19,6 @@ module.exports = ({ config }) => {
         },
       },
     ]);
-  } else {
-    console.warn(
-      "[config] expo-build-properties not installed; skipping plugin.",
-    );
   }
 
   return {
