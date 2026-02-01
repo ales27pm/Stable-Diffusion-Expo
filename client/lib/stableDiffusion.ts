@@ -152,11 +152,10 @@ export async function generateImage(
 }
 
 /**
- * Determines whether the native Stable Diffusion module is present and usable on the current device.
+ * Detects whether the app is running inside Expo Go or the Expo Store client.
  *
- * @returns `true` if running on iOS and `NativeModules.ExpoStableDiffusion` is present, `false` otherwise.
+ * @returns `true` if running under Expo Go or the Expo Store client, `false` otherwise.
  */
-// Check if the native module is available
 export function isExpoGo(): boolean {
   return (
     Constants.appOwnership === "expo" ||
@@ -174,16 +173,6 @@ export function isNativeModuleAvailable(): boolean {
   );
 }
 
-/**
- * Detects whether the app is running inside Expo Go or the Expo Store client.
- *
- * @returns `true` if running under Expo Go or the Expo Store client, `false` otherwise.
- */
-export function isExpoGo(): boolean {
-  return (
-    Constants.appOwnership === "expo" ||
-    Constants.executionEnvironment === "storeClient"
-  );
 export type StableDiffusionAvailability = {
   isAvailable: boolean;
   canUseDemo: boolean;
