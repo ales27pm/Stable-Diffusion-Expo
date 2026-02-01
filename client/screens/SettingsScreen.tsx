@@ -35,6 +35,16 @@ interface SettingRowProps {
   rightElement?: React.ReactNode;
 }
 
+/**
+ * Renders a touchable settings row with an icon, title, optional subtitle, and optional right-side element.
+ *
+ * @param icon - Name of the Feather icon to display on the left
+ * @param title - Primary text for the row
+ * @param subtitle - Secondary text displayed below the title, if provided
+ * @param onPress - Callback invoked when the row is pressed; if omitted and `rightElement` is absent the row is rendered disabled
+ * @param rightElement - Custom element rendered on the right side of the row; when provided it replaces the default chevron indicator
+ * @returns A touchable row element that shows the icon, title, optional subtitle, and either a rightElement or a chevron indicator
+ */
 function SettingRow({
   icon,
   title,
@@ -73,6 +83,13 @@ function SettingRow({
   );
 }
 
+/**
+ * Renders a titled settings section with a header and a content area.
+ *
+ * @param title - The section header text displayed above the content.
+ * @param children - Elements to render inside the section's content area.
+ * @returns The section's React element containing the title and its children.
+ */
 function SettingSection({
   title,
   children,
@@ -88,6 +105,13 @@ function SettingSection({
   );
 }
 
+/**
+ * Renders the app settings screen and manages user preferences, model loading state, and external links.
+ *
+ * Handles loading and persisting settings, updating generation defaults (steps, save originals), loading/unloading a local Stable Diffusion model when available, and opening the GitHub repo and model documentation.
+ *
+ * @returns The Settings screen UI element.
+ */
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
