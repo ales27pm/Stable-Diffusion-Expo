@@ -1,33 +1,23 @@
 {
   "cli": {
-    "version": ">= 13.2.0"
+    "version": ">= 16.0.0"
   },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "hooks": {
-        "preBuild": "bash ./eas-hooks/install-coreml.sh"
-      },
       "ios": {
         "resourceClass": "m-medium"
       }
     },
     "preview": {
       "distribution": "internal",
-      "hooks": {
-        "preBuild": "bash ./eas-hooks/install-coreml.sh"
-      },
       "ios": {
         "resourceClass": "m-medium"
       }
     },
     "production": {
       "distribution": "store",
-      "autoSubmit": true,
-      "hooks": {
-        "preBuild": "bash ./eas-hooks/install-coreml.sh"
-      },
       "ios": {
         "resourceClass": "m-medium"
       }
