@@ -1,3 +1,4 @@
+import Constants from "expo-constants";
 import { NativeModules, Platform } from "react-native";
 
 // Type definitions for expo-stable-diffusion module
@@ -120,12 +121,15 @@ export function isNativeModuleAvailable(): boolean {
     return false;
   }
 
-  if (__DEV__) {
-    return true;
-  }
-
   return Boolean(
     (NativeModules as { ExpoStableDiffusion?: unknown }).ExpoStableDiffusion,
+  );
+}
+
+export function isExpoGo(): boolean {
+  return (
+    Constants.appOwnership === "expo" ||
+    Constants.executionEnvironment === "storeClient"
   );
 }
 

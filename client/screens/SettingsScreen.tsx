@@ -25,6 +25,7 @@ import {
   loadModel,
   unloadModel,
   isNativeModuleAvailable,
+  isExpoGo,
 } from "@/lib/stableDiffusion";
 
 interface SettingRowProps {
@@ -129,7 +130,7 @@ export default function SettingsScreen() {
     } else {
       // Load model
       if (!isNativeModuleAvailable()) {
-        if (__DEV__) {
+        if (isExpoGo()) {
           Alert.alert(
             "Demo Mode",
             "Stable Diffusion runs only in native iOS builds. Using demo mode in Expo Go.",

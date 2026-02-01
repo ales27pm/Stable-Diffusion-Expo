@@ -17,6 +17,7 @@ import {
   isLoaded,
   addStepListener,
   isNativeModuleAvailable,
+  isExpoGo,
 } from "@/lib/stableDiffusion";
 import { saveGeneratedImage, generateId, getSettings } from "@/lib/storage";
 
@@ -30,7 +31,9 @@ export default function GenerateScreen() {
   const [seed, setSeed] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [generatedImageUri, setGeneratedImageUri] = useState<string | null>(null);
+  const [generatedImageUri, setGeneratedImageUri] = useState<string | null>(
+    null,
+  );
   const [isModelLoaded, setIsModelLoaded] = useState(false);
 
   useEffect(() => {
@@ -54,7 +57,7 @@ export default function GenerateScreen() {
       return;
     }
 
-    if (!isNativeModuleAvailable() && Platform.OS !== "web") {
+    if ((!isNativeModuleAvailable() || isExpoGo()) && Platform.OS !== "web") {
       // For demo purposes in Expo Go, simulate the generation
       setIsGenerating(true);
       setCurrentStep(0);
@@ -77,9 +80,9 @@ export default function GenerateScreen() {
 
         // Use a placeholder image for demo
         const demoImageUri = `https://picsum.photos/seed/${imageId}/512/512`;
-        
+
         setGeneratedImageUri(demoImageUri);
-        
+
         await saveGeneratedImage({
           id: imageId,
           uri: demoImageUri,
@@ -105,7 +108,7 @@ export default function GenerateScreen() {
     if (!isModelLoaded) {
       Alert.alert(
         "Model Not Loaded",
-        "Please load a Stable Diffusion model in Settings first."
+        "Please load a Stable Diffusion model in Settings first.",
       );
       return;
     }
