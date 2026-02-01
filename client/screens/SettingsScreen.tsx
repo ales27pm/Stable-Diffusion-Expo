@@ -24,8 +24,7 @@ import { getSettings, saveSettings, AppSettings } from "@/lib/storage";
 import {
   loadModel,
   unloadModel,
-  isNativeModuleAvailable,
-  isExpoGo,
+  getStableDiffusionAvailability,
 } from "@/lib/stableDiffusion";
 
 interface SettingRowProps {
@@ -146,25 +145,17 @@ export default function SettingsScreen() {
       try {
         await unloadModel();
         updateSettings({ isModelLoaded: false });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (error) {
         console.error("Failed to unload model", error);
         Alert.alert("Error", "Failed to unload model");
       }
     } else {
       // Load model
-      if (!isNativeModuleAvailable()) {
-        if (isExpoGo()) {
-          Alert.alert(
-            "Demo Mode",
-            "Stable Diffusion runs only in native iOS builds. Using demo mode in Expo Go.",
-          );
-        } else {
-          Alert.alert(
-            "Native Build Required",
-            "Loading Stable Diffusion models requires a native iOS build. This feature is not available in Expo Go.\n\nBuild your app with EAS to use this feature.",
-            [{ text: "OK" }],
-          );
+      const availability = getStableDiffusionAvailability();
+      if (!availability.isAvailable) {
+        Alert.alert(availability.title, availability.message, [{ text: "OK" }]);
+        if (!availability.canUseDemo) {
           return;
         }
       }
@@ -263,7 +254,7 @@ export default function SettingsScreen() {
             {settings.isModelLoaded ? "Unload Model" : "Load Model"}
           </GradientButton>
           <ThemedText style={styles.modelHint}>
-            Download models from Apple&apos;s Hugging Face repo
+            {"Download models from Apple’s Hugging Face repo"}
           </ThemedText>
         </View>
       </SettingSection>

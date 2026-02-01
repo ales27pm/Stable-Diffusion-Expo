@@ -16,8 +16,7 @@ import {
   generateImage,
   isLoaded,
   addStepListener,
-  isNativeModuleAvailable,
-  isExpoGo,
+  getStableDiffusionAvailability,
 } from "@/lib/stableDiffusion";
 import { saveGeneratedImage, generateId, getSettings } from "@/lib/storage";
 
@@ -64,7 +63,8 @@ export default function GenerateScreen() {
       return;
     }
 
-    if ((!isNativeModuleAvailable() || isExpoGo()) && Platform.OS !== "web") {
+    const availability = getStableDiffusionAvailability();
+    if (!availability.isAvailable && availability.canUseDemo) {
       // For demo purposes in Expo Go, simulate the generation
       setIsGenerating(true);
       setCurrentStep(0);
@@ -108,6 +108,11 @@ export default function GenerateScreen() {
         setIsGenerating(false);
         subscription.remove();
       }
+      return;
+    }
+
+    if (!availability.isAvailable) {
+      Alert.alert(availability.title, availability.message);
       return;
     }
 
