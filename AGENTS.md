@@ -52,3 +52,20 @@ Use the CLI to create, update, edit, or remove AGENTS.md files while preserving 
 
 - [ ] Describe module/function-level nesting patterns and ownership.
 <!-- agents:section Nest in module and function:end -->
+
+## Qodo Merge RAG
+
+<!-- agents:section Qodo Merge RAG:start -->
+
+- [ ] Enable RAG context enrichment in Qodo Merge by adding `enable_rag=true` under
+      `[rag_arguments]` in the Qodo configuration.
+- [ ] Configure `rag_repo_list` to scope semantic search to relevant repositories
+      (defaults to the repository with the open PR if left empty).
+- [ ] Confirm prerequisites: Qodo Merge Enterprise plan, single-tenant/on-prem
+      deployment, and a fully indexed database for search.
+- [ ] Supported Git platforms: GitHub, GitLab, Bitbucket, Bitbucket Data Center.
+- [ ] RAG is surfaced in `/review` via the Focus area + References list; use
+      `/implement` and `/revise` where applicable.
+- [ ] Limitations to note: semantic search quality varies, results may be noisy
+    across many repos, and indexing + security are required.
+<!-- agents:section Qodo Merge RAG:end -->

@@ -9,6 +9,7 @@ const DEFAULT_SECTIONS = [
   "Anti-drifting",
   "Full context awareness",
   "Nest in module and function",
+  "Qodo Merge RAG",
 ];
 
 const DEFAULT_SECTION_BODY = {
@@ -20,6 +21,8 @@ const DEFAULT_SECTION_BODY = {
     "- [ ] Summarize current repository context, dependencies, and active workstreams.",
   "Nest in module and function":
     "- [ ] Describe module/function-level nesting patterns and ownership.",
+  "Qodo Merge RAG":
+    "- [ ] Document how Qodo Merge RAG context enrichment is configured and used.",
 };
 
 const HEADER = "# AGENTS.md (Auto-Update)";
