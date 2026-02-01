@@ -1,0 +1,208 @@
+How to Create AI-Generated Images on iOS in React Native Using Stable Diffusion
+04 August, 2023
+3,987
+15 August, 2023
+Have you ever wondered if it's possible to generate images using Stable Diffusion natively on your iPhone or iPad while taking advantage of Core ML in an Expo and React Native app?
+
+Well, I was too!
+
+Building The Module
+
+After doing some research on Google and reading numerous articles, I came across a Swift Package called Stable Diffusion that was released in December last year by Apple.
+
+Good to know: Stable Diffusion Swift Package allows us to run converted Core ML Stable Diffusion models natively on Apple Silicon, 100% offline and free without relying on an external API! 🎉
+Unfortunately, there is a good lack of documentation on how to use this package. So, I had to reverse engineer the swift code myself and try to figure out what functions to call and with what arguments.
+
+But, that was only the first step, as my initial goal was to be able to run Stable Diffusion models in a React Native app which makes things even more complicated...
+
+Luckily, the Expo team has done an amazing job at releasing Expo Modules API. It's an abstraction layer on top of JSI and other low-level primitives that React Native is built upon which allows us to write native modules easier than ever. I highly recommend having a look at their API if you are considering creating a native module for React Native yourself!
+
+🧠 If are interested in how I managed to build the expo-stable-diffusion module using the Expo Modules API, let me know on X and might write an article on this topic in the future! 😊
+While trying to navigate these challenging waters, I have documented some parts of my early struggles in one of my recent tweets. 😁
+
+Andrei Zgîrvaci
+Andrei Zgîrvaci
+@andrei_zgirvaci
+·
+Follow
+WIP: **Generating Images using Stable Diffusion natively (Core ML) on iPhone 13 mini using @expo & @reactnative!**
+
+I am currently working on creating an Expo library using the new Expo Modules API which will allow me to run Stable Diffusion models on an iOS device!
+Image
+2:22 PM · Jul 27, 2023
+61
+Reply
+
+Copy link
+How to Download and Convert Stable Diffusion Models?
+
+Before diving into how to use the expo-stable-diffusion module, we first need a converted Core ML Stable Diffusion model which we'll use to generate images.
+
+Currently, there are 3 options on how to obtain a converted model:
+
+1. Convert Your Own Model
+
+You can convert your own model by following Apple's official guide. This is the Python snippet that I use to convert my model which you can also use:
+
+python -m python_coreml_stable_diffusion.torch2coreml \
+  --model-version stabilityai/stable-diffusion-2-1-base \
+  --convert-unet \
+  --convert-text-encoder \
+  --convert-vae-decoder \
+  --convert-safety-checker \
+  --chunk-unet \
+  --attention-implementation SPLIT_EINSUM_V2 \
+  --compute-unit ALL \
+  --bundle-resources-for-swift-cli \
+  -o models/stable-diffusion-2-1/split_einsum_v2/compiled
+💡 Make sure to have a look at Apple's official guide mentioned above to fully understand what these arguments mean as your use case may be different than mine!
+2. Download a Converted Model
+
+You can download an already converted model from Apple's official Hugging Face repo. Hugging Face doesn't allow downloading individual folders, so you would have to use git-lfs in order to download the whole repo which can take some time if you have a slow internet.
+
+However, you can use the following Python script which will allow you to download a specific folder instead:
+
+from huggingface_hub import snapshot_download
+from pathlib import Path
+repo_id = "apple/coreml-stable-diffusion-2-1-base"
+variant = "split_einsum/compiled"
+model_path = Path("./models") / (repo_id.split("/")[-1] + "_" + variant.replace("/", "_"))
+snapshot_download(repo_id, allow_patterns=f"{variant}/*", local_dir=model_path, local_dir_use_symlinks=False)
+print(f"Model downloaded at {model_path}")
+3. Download My Model
+
+Using the Python script that I mentioned in the 1st step, I managed to convert my own model that is highly optimized for the current iOS 16 devices. You can download the model from my Hugging Face repo.
+
+✅ You can also download the compressed model in the .zip file format directly from my Hugging Face repo!
+Optional: Sending The Model To Your iPhone/iPad
+
+In case you want to send your model to your iPhone/iPad from your Mac for testing purposes, you can use the following idb command which makes testing a lot easier!
+
+idb file push --udid <DEVICE UDID> --bundle-id <APP BUNDLE ID> <Model Path>/models/stable-diffusion-2-1/split_einsum_v2/compiled/Resources/* /Documents/.
+How to Use expo-stable-diffusion Module?
+
+Okay, now that we got our model, let's dive into how to install and use the expo-stable-diffusion module!
+
+1. Install
+
+First things first, we have to install the expo-stable-diffusion module in our Expo project:
+
+npx expo install expo-stable-diffusion
+2. Configure Expo Project
+
+❗️ This package is not included in the Expo Go. You will have to use a Development Build or build it locally using Xcode!
+2.1. Change iOS Deployment Target
+
+One of the most important things to do in order for your project to build is to change the iOS Deployment Target to 16.2 because the Stable Diffusion Swift Package is not supported on lower versions of iOS!
+
+To change the Deployment Target, first, we need to install the expo-build-properties plugin:
+
+npx expo install expo-build-properties
+Now we need to configure it by adding the following code to our app.json file:
+
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.2"
+          }
+        }
+      ]
+    ]
+  }
+}
+2.2. Add the Increased Memory Limit Capability
+
+Apple also recommends adding the Increased Memory Limit capability to our iOS project to prevent the app from running out of memory.
+
+Luckily this is quite easy to do in an Expo Managed app. Just add the following code to our app.json file:
+
+{
+  "expo": {
+    "ios": {
+      "entitlements": {
+        "com.apple.developer.kernel.increased-memory-limit": true
+      }
+    }
+  }
+}
+2.3. Build Your iOS App
+
+The last step is to build your iOS app by running the following 2 commands:
+
+npx expo prebuild --clean --platform ios
+npx expo run:ios
+3. Generate Images
+
+Now that we have our module installed successfully and our Expo project configured properly, we can try to generate a simple image using the example below:
+
+import * as FileSystem from 'expo-file-system';
+import * as ExpoStableDiffusion from 'expo-stable-diffusion';
+const MODEL_PATH = FileSystem.documentDirectory + 'Model/stable-diffusion-2-1';
+const SAVE_PATH = FileSystem.documentDirectory + 'image.jpeg';
+Alert.alert(`Loading Model: ${MODEL_PATH}`);
+await ExpoStableDiffusion.loadModel(MODEL_PATH);
+Alert.alert('Model Loaded, Generating Images!');
+const subscription = ExpoStableDiffusion.addStepListener(({ step }) => {
+  console.log(`Current Step: ${step}`);
+});
+await ExpoStableDiffusion.generateImage({
+  prompt: 'a cat coding at night',
+  stepCount: 25,
+  savePath: SAVE_PATH,
+});
+Alert.alert(`Image Generated: ${SAVE_PATH}`);
+subscription.remove();
+Let's go through these 2 functions and explain what they do:
+
+First, we load the model by calling the ExpoStableDiffusion.loadModel(...) function. In this case, modelPath is the path to the directory holding all model and tokenization resources. I recommend storing the model in the app's document directory for easier access.
+
+Second, we subscribe to the current image generation step to measure progress by calling the addStepListener(...) listener. Don't forget to call subscription.remove() once the image is generated in order to prevent memory leaks!
+
+Finally, we call the ExpoStableDiffusion.generateImage(...) function to start the image generation process. Once it's finished, an image will be saved in the savePath location.
+
+💡 If you are saving the image in a custom directory, make sure the directory exists. You can create a directory by calling the FileSystem.makeDirectoryAsync(fileUri, options) function from expo-file-system.
+❗️ The model load time and image generation duration take some time, especially on devices with lower RAM than 6GB! Find more information in Q6 in the FAQ section of the ml-stable-diffusion repo.
+Good to know: You can also run expo-stable-diffusion directly in your simulator by providing the path to the model on your computer to the modelPath argument. However from my testings, it doesn't use Apple's Neural Engine cores, so the model load and image generation duration will most likely be different!
+Optional: Make Folders Appear in "Files" App on iOS
+
+If you want to make the document directory of your app available so the user can see it in the "Files" app, all you need to do is add a few properties to your info.plist file.
+
+In our case, we can easily add the following code to our app.json file:
+
+{
+  "expo": {
+    "ios": {
+      "infoPlist": {
+        "UIFileSharingEnabled": true,
+        "LSSupportsOpeningDocumentsInPlace": true,
+        "UISupportsDocumentBrowser": true
+      }
+    }
+  }
+}
+💡 Don't forget to build your iOS app again in order for the changes to take effect!
+Running Stable Diffusion on Lower-End Devices
+
+The current models can only run on higher-end devices such as iPhone 13 Pro, iPhone 14 Pro, iPad Pro and iPad Air which have more RAM than other lower-end devices. This is due to the model being quite heavy...
+
+However, this year at WWDC, Apple updated the ml-stable-diffusion repo. It's now possible to convert and run Quantized Stable Diffusion Models on devices with lower RAM such as iPhone 12 Mini!
+
+Using quantized models, based on Apple's official benchmarks, it seems that it takes around 20 seconds to generate an image on iPhone 12 Mini, which is quite impressive! However, quantized models can only run on devices with iOS 17 and macOS 14 which is currently in public beta.
+
+I haven't run these models myself as I don't want to update my iPhone to iOS 17 yet. Also, we are only a month away from Apple finally releasing them publicly!
+
+How You Can Help!
+
+It will be very helpful if more developers will contribute to expo-stable-diffusion module in any shape or form!
+
+If you happen to be knowledgeable in this field, feel free to start a discussion on GitHub or shoot me a tweet directly with your suggestions.
+
+In case you encounter any bugs with expo-stable-diffusion, please open an issue on GitHub with the problem you are having.
+
+And for the real adventurous developers 🗡️ who would like to get their hands dirty by writing some code, you can contribute by opening a pull request on GitHub. Your help will be greatly appreciated!
+
+🌟 I will really appreciate if you could star the expo-stable-diffusion module on GitHub!
