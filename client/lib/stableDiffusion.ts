@@ -1,4 +1,4 @@
-import { Platform } from "react-native";
+import { NativeModules, Platform } from "react-native";
 
 // Type definitions for expo-stable-diffusion module
 // This module only works in native builds, not Expo Go
@@ -26,13 +26,15 @@ let stepListeners: StepListener[] = [];
 export async function loadModel(modelPath: string): Promise<void> {
   if (Platform.OS === "web") {
     console.log("[Web] Stable Diffusion not available on web");
-    throw new Error("Stable Diffusion is only available on iOS devices with native builds");
+    throw new Error(
+      "Stable Diffusion is only available on iOS devices with native builds",
+    );
   }
 
   // In native build, this would call ExpoStableDiffusion.loadModel(modelPath)
   // For development, we simulate the loading process
   console.log(`[StableDiffusion] Loading model from: ${modelPath}`);
-  
+
   return new Promise((resolve) => {
     setTimeout(() => {
       isModelLoaded = true;
@@ -57,7 +59,9 @@ export function getLoadedModelPath(): string | null {
   return currentModelPath;
 }
 
-export function addStepListener(listener: StepListener): { remove: () => void } {
+export function addStepListener(listener: StepListener): {
+  remove: () => void;
+} {
   stepListeners.push(listener);
   return {
     remove: () => {
@@ -70,7 +74,9 @@ function notifyStepListeners(step: number) {
   stepListeners.forEach((listener) => listener({ step }));
 }
 
-export async function generateImage(params: GenerateImageParams): Promise<string> {
+export async function generateImage(
+  params: GenerateImageParams,
+): Promise<string> {
   const { prompt, stepCount = 25, savePath, seed } = params;
 
   if (!isModelLoaded) {
@@ -78,11 +84,15 @@ export async function generateImage(params: GenerateImageParams): Promise<string
   }
 
   if (Platform.OS === "web") {
-    throw new Error("Image generation is only available on iOS devices with native builds");
+    throw new Error(
+      "Image generation is only available on iOS devices with native builds",
+    );
   }
 
   console.log(`[StableDiffusion] Generating image with prompt: "${prompt}"`);
-  console.log(`[StableDiffusion] Steps: ${stepCount}, Seed: ${seed || "random"}`);
+  console.log(
+    `[StableDiffusion] Steps: ${stepCount}, Seed: ${seed || "random"}`,
+  );
 
   // Simulate the generation process
   // In native build, this would call ExpoStableDiffusion.generateImage(params)
@@ -91,10 +101,10 @@ export async function generateImage(params: GenerateImageParams): Promise<string
     const stepInterval = setInterval(() => {
       currentStep++;
       notifyStepListeners(currentStep);
-      
+
       if (currentStep >= stepCount) {
         clearInterval(stepInterval);
-        
+
         // In production, this would return the actual saved image path
         // For development, we return a placeholder
         console.log(`[StableDiffusion] Image generated at: ${savePath}`);
@@ -106,9 +116,17 @@ export async function generateImage(params: GenerateImageParams): Promise<string
 
 // Check if the native module is available
 export function isNativeModuleAvailable(): boolean {
-  // In a real native build, we would check if the module exists
-  // For now, we return false as we're in Expo Go
-  return Platform.OS === "ios" && !__DEV__;
+  if (Platform.OS !== "ios") {
+    return false;
+  }
+
+  if (__DEV__) {
+    return true;
+  }
+
+  return Boolean(
+    (NativeModules as { ExpoStableDiffusion?: unknown }).ExpoStableDiffusion,
+  );
 }
 
 // Get device compatibility info
