@@ -90,9 +90,6 @@ jobs:
       - name: Build iOS app
         run: |
           EAS_ARGS=("--platform" "ios" "--profile" "${{ inputs.profile }}" "--non-interactive" "--wait")
-          if [ -n "${EAS_PROJECT_ID}" ]; then
-            EAS_ARGS+=("--project-id" "${EAS_PROJECT_ID}")
-          fi
           if [ "${{ inputs.auto_submit }}" = "true" ]; then
             EAS_ARGS+=("--auto-submit")
           fi
