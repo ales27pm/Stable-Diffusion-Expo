@@ -56,6 +56,10 @@ To use actual Stable Diffusion generation:
 4. Build with EAS: `npx expo prebuild && npx expo run:ios`
 5. Download Core ML model from Apple's Hugging Face repo
 
+## Release & Compliance Notes
+- `ITSAppUsesNonExemptEncryption` is set to `false` in `app.json` based on current usage (standard HTTPS/TLS only). Revisit this flag if the app adds custom cryptography, VPN features, or any non-exempt encryption to avoid export compliance issues with Apple review. 
+- `eas.json` configures `cli.appVersionSource` globally as `remote`. If future workflows need different versioning strategies per profile (e.g., internal vs production), update the EAS config accordingly.
+
 ## Workflows
 - **Start Backend**: Express server on port 5000
 - **Start Frontend**: Expo dev server on port 8081
