@@ -45,6 +45,12 @@
     ],
     "experiments": {
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "866a32fe-baa6-457b-aa12-b3d88ddf4303"
+      }
+    },
+    "owner": "ales27pm"
   }
 }
