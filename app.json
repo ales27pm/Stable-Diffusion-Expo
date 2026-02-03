@@ -45,6 +45,7 @@
     ],
     "experiments": {
       "reactCompiler": true
-    }
+    },
+    "owner": "ales27pm"
   }
 }
