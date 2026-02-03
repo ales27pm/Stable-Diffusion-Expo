@@ -79,6 +79,14 @@ jobs:
       - name: Verify EAS auth
         run: eas whoami
 
+      - name: Configure EAS project
+        run: |
+          if [ -z "${EAS_PROJECT_ID}" ]; then
+            echo "Missing EAS_PROJECT_ID secret." >&2
+            exit 1
+          fi
+          eas init --non-interactive --id "${EAS_PROJECT_ID}"
+
       - name: Build iOS app
         run: |
           EAS_ARGS=("--platform" "ios" "--profile" "${{ inputs.profile }}" "--non-interactive" "--wait")
